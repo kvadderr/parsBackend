@@ -3,22 +3,23 @@ const multer = require("multer");
 const cors = require("cors");
 const XLSX = require("xlsx");
 const bodyParser = require("body-parser");
-const { MongoClient } = require('mongodb');
+const { MongoClient } = require("mongodb");
 
-
-const client = new MongoClient("mongodb+srv://sumbembaevb:P6TQio8zC978woo7@kvadder.sp0jven.mongodb.net/kvadder?retryWrites=true&w=majority")
+const client = new MongoClient(
+  "mongodb+srv://sumbembaevb:P6TQio8zC978woo7@kvadder.sp0jven.mongodb.net/kvadder?retryWrites=true&w=majority"
+);
 let collectionsRepository = null;
 const start = async () => {
-    try {
-        console.log('connection......')
-        await client.connect();
-        console.log('Соеденение с БД установлено!');
-        collectionsRepository = client.db().collection("Collections");
-        //await client.db().createCollection('collections');
-    } catch (e) {
-        console.log(e);
-    }
-}
+  try {
+    console.log("connection......");
+    await client.connect();
+    console.log("Соеденение с БД установлено!");
+    collectionsRepository = client.db().collection("Collections");
+    //await client.db().createCollection('collections');
+  } catch (e) {
+    console.log(e);
+  }
+};
 
 start();
 const app = express();
@@ -50,16 +51,31 @@ app.post("/uploads", async (req, res) => {
   });
 });
 
-app.get("/collections", async(req, res) => {
-    const data = await collectionsRepository.find().toArray();
-    res(data);        
-})
+app.get("/collections", async (req, res) => {
+  const data = await collectionsRepository.find().toArray();
+  res.send(data);
+});
+
+app.post("/collections", async (req, res) => {
+  console.log(req.body);
+  const data = await collectionsRepository.insertOne(req.body);
+  res.send(data);
+});
+
+app.put("/collections", async (req, res) => {
+  console.log(req.body);
+  const data = await collectionsRepository.updateOne(
+    { label: req.body.label },
+    { $set:  req.body }
+  );
+  res.send(data);
+});
 
 app.post("/convert", async (req, res) => {
   //console.log(req.body.filename);
   const filename = req.body.filename;
   console.log(filename);
-  console.log('ext(filename)', ext(filename));
+  console.log("ext(filename)", ext(filename));
   const extension = ext(filename);
   switch (extension) {
     case "csv":
@@ -91,7 +107,6 @@ function ext(name) {
 }
 
 function convertFromXLSX(filename) {
-  console.log('URAAAAAAAA', filename);
   const workBook = XLSX.readFile("./uploads/" + filename);
   const savedFileName = filename.replace(/\.[^.]+$/, ".csv");
   XLSX.writeFile(workBook, "./uploads/" + savedFileName, { bookType: "csv" });
