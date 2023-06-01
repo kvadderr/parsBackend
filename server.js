@@ -22,7 +22,9 @@ const start = async () => {
 
 start();
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: 'http://65.109.234.249:5174/'
+}));
 app.use("/files", express.static("uploads"));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
