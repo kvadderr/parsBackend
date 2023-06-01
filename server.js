@@ -15,7 +15,6 @@ const start = async () => {
     await client.connect();
     console.log("Соеденение с БД установлено!");
     collectionsRepository = client.db().collection("Collections");
-    //await client.db().createCollection('collections');
   } catch (e) {
     console.log(e);
   }
@@ -45,7 +44,6 @@ app.post("/uploads", async (req, res) => {
       console.log(err);
     } else {
       var FileName = req.file.filename;
-      console.log(req.file);
       res.status(200).send(FileName);
     }
   });
@@ -57,13 +55,11 @@ app.get("/collections", async (req, res) => {
 });
 
 app.post("/collections", async (req, res) => {
-  console.log(req.body);
   const data = await collectionsRepository.insertOne(req.body);
   res.send(data);
 });
 
 app.put("/collections", async (req, res) => {
-  console.log(req.body);
   const data = await collectionsRepository.updateOne(
     { label: req.body.label },
     { $set:  req.body }
@@ -71,11 +67,16 @@ app.put("/collections", async (req, res) => {
   res.send(data);
 });
 
+app.delete("/collections", async (req, res) => {
+  console.log(req.body);
+  const data = await collectionsRepository.deleteOne(
+    { _id: ObjectId(req.body) }
+  );
+  res.send(data);
+});
+
 app.post("/convert", async (req, res) => {
-  //console.log(req.body.filename);
   const filename = req.body.filename;
-  console.log(filename);
-  console.log("ext(filename)", ext(filename));
   const extension = ext(filename);
   switch (extension) {
     case "csv":
