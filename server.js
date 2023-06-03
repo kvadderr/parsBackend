@@ -3,18 +3,20 @@ const multer = require("multer");
 const cors = require("cors");
 const XLSX = require("xlsx");
 const bodyParser = require("body-parser");
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 
 const client = new MongoClient(
   "mongodb+srv://sumbembaevb:P6TQio8zC978woo7@kvadder.sp0jven.mongodb.net/kvadder?retryWrites=true&w=majority"
 );
 let collectionsRepository = null;
+let dataRepository = null;
 const start = async () => {
   try {
     console.log("connection......");
     await client.connect();
     console.log("Соеденение с БД установлено!");
     collectionsRepository = client.db().collection("Collections");
+    dataRepository = client.db().collection("CurrentData");
   } catch (e) {
     console.log(e);
   }
@@ -27,8 +29,8 @@ app.use(cors({
   credentials: true,
 }));
 app.use("/files", express.static("uploads"));
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 const storage = multer.diskStorage({
   destination: function (req, file, callback) {
@@ -57,23 +59,34 @@ app.get("/collections", async (req, res) => {
   res.send(data);
 });
 
+app.get("/currentData", async (req, res) => {
+  const result = await dataRepository.find().toArray();
+  res.send(result);
+});
+
+app.post("/currentData", async(req, res) => {
+  const result = await dataRepository.insertMany(req.body.tableData);
+  res.send(result); 
+});
+
 app.post("/collections", async (req, res) => {
   const data = await collectionsRepository.insertOne(req.body);
   res.send(data);
 });
 
 app.put("/collections", async (req, res) => {
+  console.log(req.body);
   const data = await collectionsRepository.updateOne(
     { label: req.body.label },
-    { $set:  req.body }
+    { $set: {tags: req.body.tags} }
   );
   res.send(data);
 });
 
 app.delete("/collections", async (req, res) => {
-  console.log(req.body);
+  console.log('req.body', req.body);
   const data = await collectionsRepository.deleteOne(
-    { _id: ObjectId(req.body) }
+    { _id: new ObjectId(req.body.ID) }
   );
   res.send(data);
 });
